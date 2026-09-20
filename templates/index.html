@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Syio: study notes for any chapter</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700&family=Literata:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% include "_transition_head.html" %}
+  {% include "_settings_head.html" %}
+</head>
+<body>
+  {% include "_transition_overlay.html" %}
+  {% include "_settings_modal.html" %}
+
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="Syio home">Syio</a>
+    <p class="topbar-note">Pick a chapter. Get notes you can revise from.</p>
+    {% include "_settings_button.html" %}
+  </header>
+
+  <div class="layout">
+
+    <!-- ========== Left: chapter picker ========== -->
+    <aside class="panel" aria-labelledby="form-title">
+      <h1 id="form-title" class="panel-title">What are you studying?</h1>
+
+      <form id="study-form" class="form" novalidate>
+        <div class="field">
+          <label for="board">Board</label>
+          <select id="board" name="board" required>
+            <option value="ICSE">ICSE</option>
+            <option value="CBSE" selected>CBSE</option>
+            <option value="State Board">State Board</option>
+            <option value="IB">IB</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="class_level">Class</label>
+          <select id="class_level" name="class_level" required>
+            <option value="6">Class 6</option>
+            <option value="7">Class 7</option>
+            <option value="8">Class 8</option>
+            <option value="9">Class 9</option>
+            <option value="10" selected>Class 10</option>
+            <option value="11">Class 11</option>
+            <option value="12">Class 12</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="subject">Subject</label>
+          <input id="subject" name="subject" type="text" maxlength="100"
+                 placeholder="e.g. Science" autocomplete="off" required>
+        </div>
+
+        <div class="field">
+          <label for="chapter">Chapter name</label>
+          <input id="chapter" name="chapter" type="text" maxlength="100"
+                 placeholder="e.g. Light: Reflection and Refraction" autocomplete="off" required>
+        </div>
+
+        <button id="generate-btn" class="btn" type="submit">Generate study notes</button>
+      </form>
+    </aside>
+
+    <!-- ========== Right: results ========== -->
+    <main class="results-area" aria-live="polite">
+
+      <!-- Empty state (shown before the first request) -->
+      <section id="empty-state" class="state">
+        <h2>Your notes will appear here</h2>
+        <p>Choose your board, class, subject and chapter, then select Generate study notes.</p>
+      </section>
+
+      <!-- Loading state (Step 4 will toggle this) -->
+      <section id="loading-state" class="state" hidden>
+        <div class="spinner" aria-hidden="true"></div>
+        <h2>Writing your notes</h2>
+        <p>This usually takes a few seconds.</p>
+      </section>
+
+      <!-- Error state (Step 4 will fill in the message) -->
+      <section id="error-state" class="state state-error" role="alert" hidden>
+        <h2>Couldn't generate notes</h2>
+        <p id="error-message">Something went wrong. Please try again.</p>
+      </section>
+
+      <!--
+        Results sheet.
+        The sample content below lets you preview the styling.
+        In Step 4, JavaScript will replace it with real data and toggle
+        the `hidden` attribute on this section and the empty state.
+      -->
+      <article id="results" class="sheet" hidden>
+
+        <header class="sheet-head">
+          <h2 id="result-title">Light: Reflection and Refraction</h2>
+          <ul class="meta">
+            <li id="result-board">CBSE</li>
+            <li id="result-class">Class 10</li>
+            <li id="result-subject">Science</li>
+          </ul>
+        </header>
+
+        <section class="block" aria-labelledby="summary-title">
+          <h3 id="summary-title">Chapter summary</h3>
+          <p id="summary-text" class="prose">
+            This chapter explains how light behaves when it bounces off surfaces and when it
+            passes from one medium into another. You learn how mirrors and lenses form images,
+            and how to predict their position and size using sign conventions and formulas.
+          </p>
+        </section>
+
+        <section class="block" aria-labelledby="concepts-title">
+          <h3 id="concepts-title">Key concepts</h3>
+          <ul id="concepts-list" class="concept-grid">
+            <li class="concept">Light travels in straight lines and reflects according to the laws of reflection.</li>
+            <li class="concept">Spherical mirrors are concave or convex, and each forms different kinds of images.</li>
+            <li class="concept">Refraction is the bending of light as it changes speed between media.</li>
+            <li class="concept">Lenses use refraction to focus or spread light, which sets their power.</li>
+          </ul>
+        </section>
+
+        <section class="block" aria-labelledby="keywords-title">
+          <h3 id="keywords-title">Keywords and formulas</h3>
+          <ul id="keywords-list" class="pills">
+            <li class="pill">Focal length</li>
+            <li class="pill">Principal axis</li>
+            <li class="pill">Snell's law</li>
+            <li class="pill">1/v − 1/u = 1/f</li>
+            <li class="pill">m = h′/h = −v/u</li>
+            <li class="pill">Power = 1/f</li>
+          </ul>
+        </section>
+
+        <section class="block" aria-labelledby="questions-title">
+          <h3 id="questions-title">Practice questions</h3>
+          <div id="questions-list" class="accordion">
+
+            <details class="qa">
+              <summary>State the two laws of reflection.</summary>
+              <div class="qa-answer">
+                The angle of incidence equals the angle of reflection, and the incident ray,
+                the reflected ray and the normal all lie in the same plane.
+              </div>
+            </details>
+
+            <details class="qa">
+              <summary>What kind of mirror is used as a car's rear-view mirror, and why?</summary>
+              <div class="qa-answer">
+                A convex mirror, because it always forms an upright, diminished image and gives a
+                wider field of view.
+              </div>
+            </details>
+
+            <details class="qa">
+              <summary>An object is 20 cm from a concave mirror of focal length 15 cm. Where does the image form?</summary>
+              <div class="qa-answer">
+                Using the mirror formula with u = −20 cm and f = −15 cm, v = −60 cm. The image
+                forms 60 cm in front of the mirror.
+              </div>
+            </details>
+
+          </div>
+        </section>
+
+      </article>
+    </main>
+
+  </div>
+
+  <footer class="footer">
+    <p>Syio uses AI, so double-check important facts against your textbook.</p>
+  </footer>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

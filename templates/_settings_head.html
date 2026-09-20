@@ -1,0 +1,21 @@
+<!-- Settings + theme: include inside <head>, AFTER style.css and the transition include -->
+<script>
+  /* Runs before first paint so the saved theme never flashes the wrong colors. */
+  (function () {
+    var pref = "system";
+    try {
+      var saved = localStorage.getItem("syio:theme");
+      if (saved === "light" || saved === "dark" || saved === "system") pref = saved;
+    } catch (e) {}
+
+    var dark = pref === "dark" ||
+      (pref === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
+
+    var root = document.documentElement;
+    root.dataset.theme = dark ? "dark" : "light";
+    root.dataset.themePref = pref;
+  })();
+</script>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='settings.css') }}">
+<script src="{{ url_for('static', filename='settings.js') }}" defer></script>

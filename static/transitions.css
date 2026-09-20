@@ -1,0 +1,180 @@
+/* ==========================================================
+   Syio: page transition (three wavy curtains + wordmark)
+
+   Flow:
+     old page  -> curtains sweep in, logo appears   (.pt-in)
+     new page  -> starts covered, holds a moment    (.pt-hold)
+              -> logo fades, curtains sweep away    (.pt-out)
+
+   Tune the feel with the variables below.
+   Colors come from style.css (--marker, --indigo, --ink).
+   ========================================================== */
+
+:root {
+  --wave: clamp(60px, 12vw, 160px);                 /* width of the wavy edge */
+  --pt-dur: 520ms;                                  /* one curtain's travel time */
+  --pt-stagger: 60ms;                               /* delay between curtains */
+  --pt-out-lead: 180ms;                             /* logo fade before reveal */
+  --pt-ease: cubic-bezier(0.76, 0, 0.24, 1);        /* smooth in-out */
+  --pt-ease-out: cubic-bezier(0.22, 1, 0.36, 1);    /* soft landing */
+}
+
+/* ---------- Overlay shell ---------- */
+
+.pt {
+  --wave-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 1000' preserveAspectRatio='none'%3E%3Cpath d='M0 0H60C100 125 20 250 60 375S100 625 60 750S20 875 60 1000H0Z'/%3E%3C/svg%3E");
+
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.pt-in .pt,
+html.pt-hold .pt,
+html.pt-out .pt {
+  visibility: visible;
+  pointer-events: all; /* blocks clicks while the curtain is up */
+}
+
+/* ---------- Curtain layers ---------- */
+
+.pt-layers {
+  position: absolute;
+  inset: 0;
+}
+
+/* Going back to the landing page sweeps the other way */
+html.pt-rtl .pt-layers { transform: scaleX(-1); }
+
+.pt-layer {
+  position: absolute;
+  inset: 0;
+  background: var(--c);
+  transform: translate3d(calc(-100% - var(--wave)), 0, 0);
+  will-change: transform;
+}
+
+.pt-layer:nth-child(1) { --c: var(--marker, #ffe066); }
+.pt-layer:nth-child(2) { --c: var(--indigo, #3a40c4); }
+.pt-layer:nth-child(3) { --c: var(--ink, #1c2340); }
+
+/* Wavy edges on both sides of each layer (leading and trailing) */
+.pt-layer::before,
+.pt-layer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--wave) + 1px);
+  background: var(--c);
+  -webkit-mask: var(--wave-mask) center / 100% 100% no-repeat;
+          mask: var(--wave-mask) center / 100% 100% no-repeat;
+}
+
+.pt-layer::after  { left: calc(100% - 1px); }
+.pt-layer::before { right: calc(100% - 1px); transform: scaleX(-1); }
+
+/* Sweep in (leaving the old page): yellow leads, navy lands last */
+html.pt-in .pt-layer {
+  animation: pt-cover var(--pt-dur) var(--pt-ease) both;
+  animation-delay: calc(var(--i) * var(--pt-stagger));
+}
+
+/* Fully covered (start of the new page) */
+html.pt-hold .pt-layer { transform: translate3d(0, 0, 0); }
+
+/* Sweep away (revealing the new page): navy leaves first, yellow trails */
+html.pt-out .pt-layer {
+  animation: pt-reveal var(--pt-dur) var(--pt-ease) both;
+  animation-delay: calc(var(--pt-out-lead) + (2 - var(--i)) * var(--pt-stagger));
+}
+
+@keyframes pt-cover {
+  from { transform: translate3d(calc(-100% - var(--wave)), 0, 0); }
+  to   { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes pt-reveal {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(calc(100% + var(--wave)), 0, 0); }
+}
+
+/* ---------- Logo ---------- */
+
+.pt-logo {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-ui, "Bricolage Grotesque", system-ui, sans-serif);
+  font-size: clamp(3.5rem, 13vw, 7rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: #fff;
+  opacity: 0;
+}
+
+.pt-logo span {
+  position: relative;
+  display: inline-block;
+  isolation: isolate;
+  padding: 0 0.06em;
+}
+
+/* Highlighter swipe under the wordmark, matching the site's brand style */
+.pt-logo span::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.08em;
+  height: 0.2em;
+  z-index: -1;
+  background: var(--marker, #ffe066);
+  border-radius: 999px;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+html.pt-in .pt-logo {
+  animation: pt-logo-in 420ms var(--pt-ease-out) both;
+  animation-delay: calc(var(--pt-dur) * 0.4);
+}
+
+html.pt-in .pt-logo span::after {
+  animation: pt-underline 360ms var(--pt-ease) both;
+  animation-delay: calc(var(--pt-dur) * 0.4 + 120ms);
+}
+
+html.pt-hold .pt-logo { opacity: 1; }
+html.pt-hold .pt-logo span::after,
+html.pt-out .pt-logo span::after { transform: scaleX(1); }
+
+html.pt-out .pt-logo {
+  animation: pt-logo-out 320ms cubic-bezier(0.5, 0, 0.75, 0) both;
+}
+
+@keyframes pt-logo-in {
+  from { opacity: 0; transform: translate3d(0, 18px, 0) scale(0.96); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes pt-underline {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@keyframes pt-logo-out {
+  from { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  to   { opacity: 0; transform: translate3d(0, -14px, 0) scale(1.03); }
+}
+
+/* ---------- Accessibility ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .pt { display: none !important; }
+}

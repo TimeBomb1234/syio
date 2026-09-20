@@ -1,0 +1,25 @@
+<!-- Page transition: include inside <head>, AFTER the style.css link -->
+<link rel="stylesheet" href="{{ url_for('static', filename='transitions.css') }}">
+
+<script>
+  /* Runs before first paint. If we arrived through a transition, start with the
+     curtain already covering the page so there is no flash of the new content. */
+  (function () {
+    try {
+      var direction = sessionStorage.getItem("syio-pt");
+      if (!direction) return;
+      sessionStorage.removeItem("syio-pt");
+
+      var root = document.documentElement;
+      root.classList.add("pt-hold");
+      if (direction === "rtl") root.classList.add("pt-rtl");
+
+      // Safety net: never leave the page covered if transitions.js fails to load
+      setTimeout(function () {
+        if (root.classList.contains("pt-hold")) root.classList.remove("pt-hold", "pt-rtl");
+      }, 4000);
+    } catch (e) {}
+  })();
+</script>
+
+<script src="{{ url_for('static', filename='transitions.js') }}" defer></script>
