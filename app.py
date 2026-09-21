@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from flask import Flask
 from google import genai
 from google.genai import types
+from auth import init_auth
 
 from routes import init_routes
 
@@ -115,6 +116,9 @@ app = Flask(__name__)
 
 # routes.py never imports app.py, so there is no circular import.
 # We hand it what it needs instead.
+init_routes(app, generate_study_data, MODEL_NAME)
+
+init_auth(app)
 init_routes(app, generate_study_data, MODEL_NAME)
 
 
