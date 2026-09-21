@@ -114,10 +114,7 @@ def generate_study_data(prompt):
 
 app = Flask(__name__)
 
-# routes.py never imports app.py, so there is no circular import.
-# We hand it what it needs instead.
-init_routes(app, generate_study_data, MODEL_NAME)
-
+# Initialize authentication and routes once
 init_auth(app)
 init_routes(app, generate_study_data, MODEL_NAME)
 
