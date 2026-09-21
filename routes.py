@@ -6,7 +6,7 @@ This module does not import app.py, which avoids circular imports.
 
 import logging
 
-from flask import jsonify, render_template, request
+from flask import jsonify, redirect, render_template, request, session, url_for
 from google.genai import errors
 
 logger = logging.getLogger("syio")
@@ -22,8 +22,9 @@ DEPTH_INSTRUCTIONS = {
         "(under 15 words each), use the shortest possible summary, and give one-line answers."
     ),
     "deep": (
-        "Go into depth. Explain each key concept in 2-3 flowing sentences, make the summary "
-        "rich and precise, and give worked, step-by-step answers with reasoning."
+        "Go extremely in-depth. Provide comprehensive, multi-paragraph explanations for each "
+        "key concept, complete with physical significance, detailed breakdowns, and complete "
+        "step-by-step derivations or problem-solving guides for formulas."
     ),
 }
 
@@ -64,11 +65,22 @@ def init_routes(app, generate_study_data, model_name):
     """Register every route on the given Flask app."""
 
     @app.get("/")
+    def landing():
+        """Root page: shows login if not signed in, otherwise goes to dashboard."""
+        if "user" in session:
+            return redirect(url_for("dashboard"))
+        return render_template("login.html")
+
+    @app.get("/welcome")
     def welcome():
+        """The welcome/intro page."""
         return render_template("welcome.html")
 
     @app.get("/dashboard")
     def dashboard():
+        """Protected main app dashboard."""
+        if "user" not in session:
+            return redirect(url_for("landing"))
         return render_template("index.html")
 
     @app.get("/health")
