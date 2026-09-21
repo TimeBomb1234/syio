@@ -24,7 +24,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("syio")
 
 API_KEY = os.getenv("GEMINI_API_KEY")
-MODEL_NAME = os.getenv("MODEL_NAME", "gemma-4-26b-a4b-it")
+MODEL_NAME = os.getenv("MODEL_NAME", "gemini-3.5-flash")
 MAX_ATTEMPTS = 2  # one retry if the model returns bad JSON
 
 if not API_KEY:
