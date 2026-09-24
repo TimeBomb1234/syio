@@ -90,10 +90,15 @@ def validate_study_data(data):
 
 def generate_study_data(prompt):
     """Call the model, retrying once if the output isn't valid JSON."""
-    config_kwargs = {"temperature": 0.4}
+    config_kwargs = {
+        "temperature": 0.4,
+        "thinking_config": {"thinking_budget": 0}  # Disables deep reasoning lag to speed up quick generation tasks
+    }
+
     # JSON mode is only reliably supported on Gemini models, not Gemma.
     if MODEL_NAME.startswith("gemini"):
         config_kwargs["response_mime_type"] = "application/json"
+
     config = types.GenerateContentConfig(**config_kwargs)
 
     last_error = None
