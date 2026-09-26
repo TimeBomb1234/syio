@@ -66,21 +66,21 @@ def init_routes(app, generate_study_data, model_name):
 
     @app.get("/")
     def landing():
-        """Root page: shows login if not signed in, otherwise goes to dashboard."""
+        """Root page: always shows the welcome/landing screen."""
+        return render_template("welcome.html")
+
+    @app.get("/login")
+    def login_page():
+        """Dedicated login/sign-in page."""
         if "user" in session:
             return redirect(url_for("dashboard"))
         return render_template("login.html")
-
-    @app.get("/welcome")
-    def welcome():
-        """The welcome/intro page."""
-        return render_template("welcome.html")
 
     @app.get("/dashboard")
     def dashboard():
         """Protected main app dashboard."""
         if "user" not in session:
-            return redirect(url_for("landing"))
+            return redirect(url_for("login_page"))
         return render_template("index.html")
 
     @app.get("/health")
