@@ -1,19 +1,130 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Syio</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-</head>
-<body class="login-page" style="display: flex; justify-content: center; align-items: center; height: 100vh; background: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif;">
-    <div class="login-card" style="text-align: center; background: #1e293b; padding: 40px; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); max-width: 400px; width: 100%;">
-        <h1 style="font-size: 2.5rem; margin-bottom: 10px; color: #38bdf8;">Syio 🚀</h1>
-        <p style="color: #94a3b8; margin-bottom: 30px;">Turn any chapter into instant study notes.</p>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sign in to Syio</title>
 
-        <a href="/login" style="display: inline-block; background: #ffffff; color: #1e293b; font-weight: 600; text-decoration: none; padding: 12px 24px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); transition: transform 0.2s;">
-            🔑 Sign in with Google
-        </a>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@400;600;700&family=Literata:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  {% include "_transition_head.html" %}
+  {% include "_settings_head.html" %}
+
+  <style>
+    .login-shell {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      padding: 2rem clamp(1rem, 4vw, 2.5rem);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 380px;
+      padding: 2.25rem 2rem;
+      text-align: center;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-lg);
+    }
+
+    .login-brand {
+      display: inline-block;
+      margin-bottom: 1.1rem;
+      font-size: 1.6rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      text-decoration: none;
+      background: linear-gradient(transparent 62%, rgba(255, 224, 102, 0.85) 62%, rgba(255, 224, 102, 0.85) 92%, transparent 92%);
+      padding: 0 0.15rem;
+    }
+
+    .login-card h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.4rem;
+    }
+
+    .login-card p {
+      color: var(--ink-soft);
+      font-size: 0.95rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 0.85rem 1rem;
+      font: inherit;
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: #3c4043;
+      background: #fff;
+      border: 1px solid #dadce0;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      text-decoration: none;
+      transition: box-shadow 0.15s, background-color 0.15s;
+    }
+
+    .google-btn:hover { box-shadow: 0 1px 6px rgba(32, 33, 36, 0.28); background: #f8f9fa; }
+    .google-btn:active { background: #f1f3f4; }
+    .google-btn svg { width: 20px; height: 20px; flex: none; }
+
+    .login-back {
+      display: inline-block;
+      margin-top: 1.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--ink-soft);
+      text-decoration: none;
+    }
+
+    .login-back:hover { color: var(--text); }
+
+    .login-note {
+      margin-top: 2rem;
+      max-width: 34ch;
+      margin-inline: auto;
+      font-size: 0.82rem;
+      color: var(--ink-soft);
+    }
+  </style>
+</head>
+<body>
+  {% include "_transition_overlay.html" %}
+
+  <div class="login-shell">
+    <div class="login-card">
+      <a class="login-brand" href="{{ url_for('welcome') }}">Syio</a>
+      <h1>Sign in to continue</h1>
+      <p>Your notes and settings are saved to your account.</p>
+
+      <a class="google-btn" href="{{ url_for('login_google') }}" data-no-transition>
+        <svg viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#4285F4" d="M45.1 24.5c0-1.6-.15-3.1-.42-4.6H24v8.7h11.85c-.5 2.8-2.05 5.15-4.4 6.75v5.6h7.1c4.15-3.8 6.55-9.45 6.55-16.45Z"/>
+          <path fill="#34A853" d="M24 46c5.95 0 10.95-1.95 14.6-5.3l-7.1-5.6c-1.95 1.35-4.5 2.15-7.5 2.15-5.75 0-10.6-3.9-12.35-9.1H4.3v5.75C7.95 41.1 15.35 46 24 46Z"/>
+          <path fill="#FBBC05" d="M11.65 28.15A13.9 13.9 0 0 1 10.9 24c0-1.45.25-2.85.75-4.15v-5.75H4.3A21.9 21.9 0 0 0 2 24c0 3.55.85 6.9 2.3 9.9l7.35-5.75Z"/>
+          <path fill="#EA4335" d="M24 10.75c3.25 0 6.15 1.1 8.45 3.3l6.3-6.3C34.9 4.15 29.9 2 24 2 15.35 2 7.95 6.9 4.3 14.1l7.35 5.75c1.75-5.2 6.6-9.1 12.35-9.1Z"/>
+        </svg>
+        Sign in with Google
+      </a>
+
+      <a class="login-back" href="{{ url_for('welcome') }}">Back to home</a>
+
+      <p class="login-note">
+        By continuing, you agree to let Syio save the notes you generate so you can
+        find them again later.
+      </p>
     </div>
+  </div>
+
 </body>
 </html>

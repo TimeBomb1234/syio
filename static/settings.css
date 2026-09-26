@@ -89,7 +89,44 @@ html.theme-anim *::after {
 .icon-btn:focus-visible { outline: 3px solid var(--marker); outline-offset: 2px; }
 .icon-btn svg { width: 20px; height: 20px; }
 
-.topbar .icon-btn { margin-left: auto; align-self: center; }
+.topbar .nav-actions { margin-left: auto; align-items: center; }
+
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  font-size: 0.85rem;
+  color: #e3e6f6;
+}
+
+.user-chip img {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid #454e7d;
+  object-fit: cover;
+}
+
+.user-chip-name {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topbar .text-link {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #c6cbe6;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.topbar .text-link:hover { color: #fff; }
+
+@media (max-width: 560px) {
+  .user-chip-name { display: none; }
+}
 
 .nav-actions {
   display: flex;

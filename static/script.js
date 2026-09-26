@@ -83,6 +83,9 @@
   // ---------- API call ----------
 
   function friendlyErrorForStatus(status, serverMessage) {
+    if (status === 401) {
+      return serverMessage || "Please sign in to generate notes.";
+    }
     if (status === 429) {
       return "You've hit the rate limit. Wait a minute, then try again.";
     }
@@ -117,6 +120,10 @@
 
       if (!response.ok) {
         const serverMessage = body && typeof body.error === "string" ? body.error : "";
+        if (response.status === 401) {
+          const loginUrl = (body && body.login_url) || "/login";
+          setTimeout(() => window.location.assign(loginUrl), 1200);
+        }
         throw new Error(friendlyErrorForStatus(response.status, serverMessage));
       }
 

@@ -1,10 +1,11 @@
 """Syio: all URL routes.
 
-Call init_routes(app, generate_study_data, model_name) from app.py.
+Call init_routes(app, generate_study_data, model_name, google_oauth) from app.py.
 This module does not import app.py, which avoids circular imports.
 """
 
 import logging
+from functools import wraps
 
 from flask import jsonify, redirect, render_template, request, session, url_for
 from google.genai import errors
@@ -22,9 +23,8 @@ DEPTH_INSTRUCTIONS = {
         "(under 15 words each), use the shortest possible summary, and give one-line answers."
     ),
     "deep": (
-        "Go extremely in-depth. Provide comprehensive, multi-paragraph explanations for each "
-        "key concept, complete with physical significance, detailed breakdowns, and complete "
-        "step-by-step derivations or problem-solving guides for formulas."
+        "Go into depth. Explain each key concept in 2-3 flowing sentences, make the summary "
+        "rich and precise, and give worked, step-by-step answers with reasoning."
     ),
 }
 
@@ -61,38 +61,110 @@ Rules:
 """
 
 
-def init_routes(app, generate_study_data, model_name):
+def _safe_next_url(candidate, default):
+    """Only follow a same-site path, never an absolute URL, to avoid open redirects."""
+    if candidate and candidate.startswith("/") and not candidate.startswith("//"):
+        return candidate
+    return default
+
+
+def login_required(view):
+    """Redirect anonymous visitors to /login, remembering where they were headed.
+    Use on page routes that render HTML."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def api_login_required(view):
+    """Reject anonymous requests with 401 JSON instead of an HTML redirect.
+    Use on API routes called via fetch(), so the frontend can show a clear error
+    rather than trying to parse a login page as JSON."""
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return jsonify({"error": "Please sign in to continue.", "login_url": url_for("login")}), 401
+        return view(*args, **kwargs)
+
+    return wrapped
+
+
+def init_routes(app, generate_study_data, model_name, google_oauth):
     """Register every route on the given Flask app."""
 
-    @app.get("/")
-    def landing():
-        """Root page: always shows the welcome/landing screen."""
-        return render_template("welcome.html")
+    # ---------- Public pages ----------
 
+    @app.get("/")
     @app.get("/welcome")
     def welcome():
-        """The welcome/intro page route for template links."""
-        return render_template("welcome.html")
-
-    @app.get("/login")
-    def login_page():
-        """Dedicated login/sign-in page."""
-        if "user" in session:
-            return redirect(url_for("dashboard"))
-        return render_template("login.html")
-
-    @app.get("/dashboard")
-    def dashboard():
-        """Protected main app dashboard."""
-        if "user" not in session:
-            return redirect(url_for("login_page"))
-        return render_template("index.html")
+        return render_template("welcome.html", user=session.get("user"))
 
     @app.get("/health")
     def health():
         return jsonify({"status": "ok", "model": model_name})
 
+    # ---------- Auth ----------
+
+    @app.get("/login")
+    def login():
+        if "user" in session:
+            return redirect(url_for("dashboard"))
+        # Remember where the visitor was headed so the callback can return them there.
+        session["next"] = _safe_next_url(request.args.get("next"), url_for("dashboard"))
+        return render_template("login.html")
+
+    @app.get("/login/google")
+    def login_google():
+        redirect_uri = url_for("auth_callback", _external=True)
+        return google_oauth.authorize_redirect(redirect_uri)
+
+    @app.get("/auth/callback")
+    def auth_callback():
+        try:
+            token = google_oauth.authorize_access_token()
+        except Exception:
+            logger.exception("Google OAuth callback failed")
+            return redirect(url_for("login"))
+
+        user_info = token.get("userinfo")
+        if not user_info or not user_info.get("email"):
+            logger.warning("Google OAuth returned no usable profile")
+            return redirect(url_for("login"))
+
+        # Keep the session small: just what the UI needs to display.
+        session.clear()
+        session["user"] = {
+            "email": user_info.get("email"),
+            "name": user_info.get("name") or user_info.get("email"),
+            "picture": user_info.get("picture"),
+        }
+        session.permanent = True
+
+        next_url = _safe_next_url(session.pop("next", None), url_for("dashboard"))
+        return redirect(next_url)
+
+    @app.get("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("welcome"))
+
+    # ---------- Protected pages ----------
+
+    @app.get("/dashboard")
+    @login_required
+    def dashboard():
+        return render_template("index.html", user=session["user"])
+
+    # Protected too: without this, anyone could call the AI endpoint directly
+    # (and spend your free-tier Gemini quota) without ever signing in.
     @app.post("/api/generate")
+    @api_login_required
     def generate():
         payload = request.get_json(silent=True)
         if not isinstance(payload, dict):

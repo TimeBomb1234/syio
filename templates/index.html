@@ -19,7 +19,14 @@
   <header class="topbar">
     <a class="brand" href="/" aria-label="Syio home">Syio</a>
     <p class="topbar-note">Pick a chapter. Get notes you can revise from.</p>
-    {% include "_settings_button.html" %}
+    <div class="nav-actions">
+      <div class="user-chip">
+        {% if user.picture %}<img src="{{ user.picture }}" alt="" referrerpolicy="no-referrer">{% endif %}
+        <span class="user-chip-name">{{ user.name }}</span>
+        <a class="text-link" href="{{ url_for('logout') }}" data-no-transition>Sign out</a>
+      </div>
+      {% include "_settings_button.html" %}
+    </div>
   </header>
 
   <div class="layout">
