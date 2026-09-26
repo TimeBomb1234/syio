@@ -113,11 +113,11 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
 
     @app.get("/login")
     def login():
-        if "user" in session:
-            return redirect(url_for("welcome"))
-        # Default to welcome/main portal instead of dashboard
-        session["next"] = _safe_next_url(request.args.get("next"), url_for("welcome"))
-        return render_template("login.html")
+            if "user" in session:
+                return redirect(url_for("welcome"))
+            # Explicitly fallback to "/"
+            session["next"] = _safe_next_url(request.args.get("next"), "/")
+            return render_template("login.html")
 
     @app.get("/login/google")
     def login_google():
@@ -126,11 +126,11 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
 
     @app.get("/auth/callback")
     def auth_callback():
-        try:
-            token = google_oauth.authorize_access_token()
-        except Exception:
-            logger.exception("Google OAuth callback failed")
-            return redirect(url_for("login"))
+            # ... (keep all your token verification code as is) ...
+
+            # Explicitly fallback to "/"
+            next_url = _safe_next_url(session.pop("next", None), "/")
+            return redirect(next_url)
 
         user_info = token.get("userinfo")
         if not user_info or not user_info.get("email"):
