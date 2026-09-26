@@ -69,6 +69,11 @@ def init_routes(app, generate_study_data, model_name):
         """Root page: always shows the welcome/landing screen."""
         return render_template("welcome.html")
 
+    @app.get("/welcome")
+    def welcome():
+        """The welcome/intro page route for template links."""
+        return render_template("welcome.html")
+
     @app.get("/login")
     def login_page():
         """Dedicated login/sign-in page."""
