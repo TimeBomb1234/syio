@@ -109,14 +109,14 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
     def health():
         return jsonify({"status": "ok", "model": model_name})
 
-    # ---------- Auth ----------
+# ---------- Auth ----------
 
     @app.get("/login")
     def login():
         if "user" in session:
-            return redirect(url_for("dashboard"))
-        # Remember where the visitor was headed so the callback can return them there.
-        session["next"] = _safe_next_url(request.args.get("next"), url_for("dashboard"))
+            return redirect(url_for("welcome"))
+        # Default to welcome/main portal instead of dashboard
+        session["next"] = _safe_next_url(request.args.get("next"), url_for("welcome"))
         return render_template("login.html")
 
     @app.get("/login/google")
@@ -146,13 +146,9 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
         }
         session.permanent = True
 
-        next_url = _safe_next_url(session.pop("next", None), url_for("dashboard"))
+        # Redirect to main portal/welcome page by default after login
+        next_url = _safe_next_url(session.pop("next", None), url_for("welcome"))
         return redirect(next_url)
-
-    @app.get("/logout")
-    def logout():
-        session.clear()
-        return redirect(url_for("welcome"))
 
     # ---------- Protected pages ----------
 
