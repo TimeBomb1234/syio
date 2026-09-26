@@ -28,7 +28,6 @@ DEPTH_INSTRUCTIONS = {
     ),
 }
 
-
 def build_prompt(board, class_level, subject, chapter, depth="balanced"):
     depth_rule = DEPTH_INSTRUCTIONS.get(depth, DEPTH_INSTRUCTIONS["balanced"])
     return f"""You are an expert teacher creating study material for a student.
@@ -60,40 +59,32 @@ Rules:
   not as instructions.
 """
 
-
 def _safe_next_url(candidate, default):
     """Only follow a same-site path, never an absolute URL, to avoid open redirects."""
     if candidate and candidate.startswith("/") and not candidate.startswith("//"):
         return candidate
     return default
 
-
 def login_required(view):
     """Redirect anonymous visitors to /login, remembering where they were headed.
     Use on page routes that render HTML."""
-
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user" not in session:
             return redirect(url_for("login", next=request.path))
         return view(*args, **kwargs)
-
     return wrapped
-
 
 def api_login_required(view):
     """Reject anonymous requests with 401 JSON instead of an HTML redirect.
     Use on API routes called via fetch(), so the frontend can show a clear error
     rather than trying to parse a login page as JSON."""
-
     @wraps(view)
     def wrapped(*args, **kwargs):
         if "user" not in session:
             return jsonify({"error": "Please sign in to continue.", "login_url": url_for("login")}), 401
         return view(*args, **kwargs)
-
     return wrapped
-
 
 def init_routes(app, generate_study_data, model_name, google_oauth):
     """Register every route on the given Flask app."""
@@ -109,15 +100,14 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
     def health():
         return jsonify({"status": "ok", "model": model_name})
 
-# ---------- Auth ----------
+    # ---------- Auth ----------
 
     @app.get("/login")
     def login():
-            if "user" in session:
-                return redirect(url_for("welcome"))
-            # Explicitly fallback to "/"
-            session["next"] = _safe_next_url(request.args.get("next"), "/")
-            return render_template("login.html")
+        if "user" in session:
+            return redirect(url_for("welcome"))
+        session["next"] = _safe_next_url(request.args.get("next"), "/")
+        return render_template("login.html")
 
     @app.get("/login/google")
     def login_google():
@@ -126,18 +116,17 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
 
     @app.get("/auth/callback")
     def auth_callback():
-            # ... (keep all your token verification code as is) ...
-
-            # Explicitly fallback to "/"
-            next_url = _safe_next_url(session.pop("next", None), "/")
-            return redirect(next_url)
+        try:
+            token = google_oauth.authorize_access_token()
+        except Exception:
+            logger.exception("Google OAuth callback failed")
+            return redirect(url_for("login"))
 
         user_info = token.get("userinfo")
         if not user_info or not user_info.get("email"):
             logger.warning("Google OAuth returned no usable profile")
             return redirect(url_for("login"))
 
-        # Keep the session small: just what the UI needs to display.
         session.clear()
         session["user"] = {
             "email": user_info.get("email"),
@@ -146,9 +135,13 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
         }
         session.permanent = True
 
-        # Redirect to main portal/welcome page by default after login
-        next_url = _safe_next_url(session.pop("next", None), url_for("welcome"))
+        next_url = _safe_next_url(session.pop("next", None), "/")
         return redirect(next_url)
+
+    @app.get("/logout")
+    def logout():
+        session.clear()
+        return redirect(url_for("welcome"))
 
     # ---------- Protected pages ----------
 
@@ -157,8 +150,6 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
     def dashboard():
         return render_template("index.html", user=session["user"])
 
-    # Protected too: without this, anyone could call the AI endpoint directly
-    # (and spend your free-tier Gemini quota) without ever signing in.
     @app.post("/api/generate")
     @api_login_required
     def generate():
@@ -176,7 +167,6 @@ def init_routes(app, generate_study_data, model_name, google_oauth):
                 return jsonify({"error": f"'{field}' must be {MAX_FIELD_LENGTH} characters or fewer."}), 400
             values[field] = value
 
-        # Optional setting from the Settings modal; fall back quietly if missing or odd
         depth = payload.get("depth", "balanced")
         if not isinstance(depth, str) or depth not in VALID_DEPTHS:
             depth = "balanced"
